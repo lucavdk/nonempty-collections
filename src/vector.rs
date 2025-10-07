@@ -812,6 +812,12 @@ impl<T> NEVec<T> {
         unsafe { crate::NESlice::from_slice_unchecked(self.inner.as_slice()) }
     }
 
+    /// Yields a slice to the internal data
+    #[must_use]
+    pub const fn as_slice(&self) -> &[T] {
+        self.inner.as_slice()
+    }
+
     /// Removes all but the first of consecutive elements in the vector that
     /// resolve to the same key.
     ///
@@ -997,6 +1003,12 @@ impl<T> From<(T, Vec<T>)> for NEVec<T> {
 impl<T> AsRef<Vec<T>> for NEVec<T> {
     fn as_ref(&self) -> &Vec<T> {
         self.inner.as_ref()
+    }
+}
+
+impl<T> AsRef<[T]> for NEVec<T> {
+    fn as_ref(&self) -> &[T] {
+        &self.inner
     }
 }
 

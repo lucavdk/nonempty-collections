@@ -32,6 +32,13 @@ impl<'a, T> NESlice<'a, T> {
         &self.inner[0]
     }
 
+    /// Get the last element. Never fails.
+    #[must_use]
+    #[allow(clippy::missing_panics_doc)] // never fails
+    pub const fn last(&self) -> &T {
+        self.inner.last().unwrap()
+    }
+
     /// Using `try_from_slice` gives a proof that the input slice is non-empty
     /// in the `Some` branch.
     #[must_use]
@@ -107,6 +114,11 @@ impl<'a, T> NESlice<'a, T> {
             inner: self.inner.chunks(chunk_size.get()),
         }
     }
+}
+
+/// Converts a reference to T into a nonempty slice of length 1 (without copying).
+pub const fn from_ref<T>(s: &T) -> NESlice<'_, T> {
+    NESlice { inner: std::slice::from_ref(s) }
 }
 
 impl<T> AsRef<[T]> for NESlice<'_, T> {
