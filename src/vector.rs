@@ -395,6 +395,23 @@ impl<T> NEVec<T> {
         self.inner.get_mut(index)
     }
 
+    /// Extracts a slice containing the entire nonempty vector.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nonempty_collections::nev;
+    /// use std::io::{self, Write};
+    ///
+    /// let v = nev![1, 2, 3, 5, 8];
+    /// v.as_slice();
+    /// io::sink().write(buffer.as_slice()).unwrap();
+    /// ```
+    #[must_use]
+    pub const fn as_slice(&self) -> &[T] {
+        self.inner.as_slice()
+    }
+
     /// Returns a regular iterator over the values in this non-empty vector.
     ///
     /// For a `NonEmptyIterator` see `Self::nonempty_iter()`.
@@ -1027,6 +1044,12 @@ impl<T> AsRef<Vec<T>> for NEVec<T> {
     }
 }
 
+impl<T> AsRef<[T]> for NEVec<T> {
+    fn as_ref(&self) -> &[T] {
+        &self.inner
+    }
+}
+
 impl<T> AsMut<Vec<T>> for NEVec<T> {
     fn as_mut(&mut self) -> &mut Vec<T> {
         self.inner.as_mut()
@@ -1404,12 +1427,18 @@ mod tests {
     }
 
     #[test]
-    fn test_as_slice() {
+    fn test_as_nonempty_slice() {
         let nonempty = NEVec::from((0, vec![1, 2, 3]));
         assert_eq!(
             crate::NESlice::try_from_slice(&[0, 1, 2, 3]).unwrap(),
             nonempty.as_nonempty_slice(),
         );
+    }
+
+    #[test]
+    fn test_as_slice() {
+        let nonempty = NEVec::from((0, vec![1, 2, 3]));
+        assert_eq!(nonempty.as_slice(), &[0, 1, 2, 3][..]);
     }
 
     #[test]
