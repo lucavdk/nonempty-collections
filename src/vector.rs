@@ -1,5 +1,10 @@
 //! Non-empty Vectors.
 
+use crate::iter::FromNonEmptyIterator;
+use crate::iter::IntoNonEmptyIterator;
+use crate::iter::NonEmptyIterator;
+use crate::slice::NEChunks;
+use crate::Singleton;
 use core::fmt;
 use std::cmp::Ordering;
 use std::fmt::Debug;
@@ -10,11 +15,6 @@ use std::num::NonZeroUsize;
 use serde::Deserialize;
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-use crate::iter::FromNonEmptyIterator;
-use crate::iter::IntoNonEmptyIterator;
-use crate::iter::NonEmptyIterator;
-use crate::slice::NEChunks;
 
 /// Like the [`vec!`] macro, but enforces at least one argument. A nice
 /// short-hand for constructing [`NEVec`] values.
@@ -1201,6 +1201,20 @@ impl<T> Extend<T> for NEVec<T> {
         I: IntoIterator<Item = T>,
     {
         self.inner.extend(iter);
+    }
+}
+
+impl<T> Singleton for NEVec<T> {
+    type Item = T;
+
+    /// ```
+    /// use nonempty_collections::{NEVec, Singleton, nev};
+    ///
+    /// let v = NEVec::singleton(1);
+    /// assert_eq!(nev![1], v);
+    /// ```
+    fn singleton(item: T) -> NEVec<T> {
+        NEVec::new(item)
     }
 }
 
