@@ -1,5 +1,17 @@
 # `nonempty-collections`
 
+## 1.2.1 (2025-11-11)
+
+Happy Remembrance Day.
+
+#### Added
+
+- `NonEmptyIterator::intersperse`, finally! `Iterator::intersperse` within `std`
+  is still not stabilized after years of waiting, and its annoying to depend on
+  `itertools` just for this.
+- More impls of `FromNonEmptyIterator`. You can now fold non-empty iterators
+  into `String`, `BTreeMap`, `BTreeSet`, `PathBuf`, and `()`.
+
 ## 1.1.0 (2025-10-16)
 
 #### Added

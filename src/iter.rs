@@ -3,8 +3,11 @@
 use crate::nev;
 use crate::NEVec;
 use crate::Singleton;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::hash::BuildHasher;
@@ -12,6 +15,8 @@ use std::hash::Hash;
 use std::iter::Product;
 use std::iter::Sum;
 use std::num::NonZeroUsize;
+use std::path::Path;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::result::Result;
 
@@ -440,6 +445,23 @@ pub trait NonEmptyIterator: IntoIterator {
         K: PartialEq,
     {
         NEGroupBy { iter: self, f }
+    }
+
+    /// Inject a given value between each item of the [`NonEmptyIterator`].
+    ///
+    /// ```
+    /// use nonempty_collections::*;
+    ///
+    /// let n = nev![1, 2, 3];
+    /// let m: NEVec<_> = n.into_nonempty_iter().intersperse(0).collect();
+    /// assert_eq!(nev![1, 0, 2, 0, 3], m);
+    /// ```
+    fn intersperse(self, item: Self::Item) -> Intersperse<Self>
+    where
+        Self: Sized,
+        Self::Item: Clone,
+    {
+        Intersperse { iter: self, item }
     }
 
     /// Takes a closure and creates a non-empty iterator which calls that
@@ -908,6 +930,63 @@ pub trait FromNonEmptyIterator<T>: Sized {
         I: IntoNonEmptyIterator<Item = T>;
 }
 
+impl FromNonEmptyIterator<()> for () {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = ()>,
+    {
+        // NOTE: 2025-11-11 Can't just be a short-circuited `()` due to the
+        // potential for side-effects to be occuring within the original
+        // iterator.
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl FromNonEmptyIterator<String> for String {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = String>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<'a> FromNonEmptyIterator<&'a str> for String {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = &'a str>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<'a> FromNonEmptyIterator<Cow<'a, str>> for String {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = Cow<'a, str>>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl FromNonEmptyIterator<char> for String {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = char>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<'a> FromNonEmptyIterator<&'a char> for String {
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = &'a char>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
 impl<T> FromNonEmptyIterator<T> for Vec<T> {
     fn from_nonempty_iter<I>(iter: I) -> Self
     where
@@ -938,6 +1017,42 @@ where
     fn from_nonempty_iter<I>(iter: I) -> Self
     where
         I: IntoNonEmptyIterator<Item = T>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<K, V> FromNonEmptyIterator<(K, V)> for BTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = (K, V)>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<T> FromNonEmptyIterator<T> for BTreeSet<T>
+where
+    T: Ord,
+{
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = T>,
+    {
+        iter.into_nonempty_iter().into_iter().collect()
+    }
+}
+
+impl<P> FromNonEmptyIterator<P> for PathBuf
+where
+    P: AsRef<Path>,
+{
+    fn from_nonempty_iter<I>(iter: I) -> Self
+    where
+        I: IntoNonEmptyIterator<Item = P>,
     {
         iter.into_nonempty_iter().into_iter().collect()
     }
@@ -1548,6 +1663,75 @@ impl<I: Iterator> IntoIterator for Peekable<I> {
 
     fn into_iter(self) -> Self::IntoIter {
         std::iter::once(self.first).chain(self.rest)
+    }
+}
+
+pub struct Intersperse<I>
+where
+    I: NonEmptyIterator,
+{
+    iter: I,
+    item: I::Item,
+}
+
+impl<I> NonEmptyIterator for Intersperse<I>
+where
+    I: NonEmptyIterator,
+    I::Item: Clone,
+{
+}
+
+impl<I> IntoIterator for Intersperse<I>
+where
+    I: NonEmptyIterator,
+    I::Item: Clone,
+{
+    type Item = I::Item;
+
+    type IntoIter = RawIntersperse<<I as IntoIterator>::IntoIter>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut iter = self.iter.into_iter();
+
+        let raw = RawIntersperse {
+            item: self.item.clone(),
+            next: iter.next(),
+            iter,
+        };
+
+        raw.into_iter()
+    }
+}
+
+pub struct RawIntersperse<I>
+where
+    I: Iterator,
+{
+    iter: I,
+    item: I::Item,
+    next: Option<I::Item>,
+}
+
+impl<I> Iterator for RawIntersperse<I>
+where
+    I: Iterator,
+    I::Item: Clone,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.next.is_none() {
+            match self.iter.next() {
+                Some(next) => {
+                    self.next = Some(next);
+                    Some(self.item.clone())
+                }
+                // Completely done the iteration.
+                None => None,
+            }
+        } else {
+            self.next.take()
+        }
     }
 }
 
