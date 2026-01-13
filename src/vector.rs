@@ -10,6 +10,7 @@ use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::num::NonZeroUsize;
+use std::slice::SliceIndex;
 
 #[cfg(feature = "serde")]
 use serde::Deserialize;
@@ -97,12 +98,12 @@ impl<T> NEVec<T> {
     /// Create a new non-empty list by repeating an element a non-zero number of times.
     ///
     /// ```
-    /// use nonempty_collections::NEVec;
+    /// use nonempty_collections::*;
     /// use std::num::NonZeroUsize;
     ///
     /// let n = NonZeroUsize::new(3).unwrap();
     /// let mut v = NEVec::from_elem(1, n);
-    /// assert_eq!(&v[..], &[1, 1, 1]);
+    /// assert_eq!(v, nev![1, 1, 1]);
     /// ```
     #[must_use]
     pub fn from_elem(elem: T, n: NonZeroUsize) -> Self
@@ -1159,7 +1160,10 @@ impl<'a, T> IntoIterator for &'a mut NEVec<T> {
     }
 }
 
-impl<T, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for NEVec<T> {
+impl<T, I> std::ops::Index<I> for NEVec<T>
+where
+    I: SliceIndex<[T]>,
+{
     type Output = I::Output;
 
     /// ```
@@ -1179,7 +1183,10 @@ impl<T, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for NEVec<T> {
     }
 }
 
-impl<T, I: std::slice::SliceIndex<[T]>> std::ops::IndexMut<I> for NEVec<T> {
+impl<T, I> std::ops::IndexMut<I> for NEVec<T>
+where
+    I: SliceIndex<[T]>,
+{
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         self.inner.index_mut(index)
     }
@@ -1224,7 +1231,6 @@ impl<T> Singleton for NEVec<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::nev;
     use crate::NEVec;
 
     #[derive(Debug, Clone, PartialEq)]

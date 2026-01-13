@@ -696,11 +696,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::num::NonZeroUsize;
-
     use maplit::hashmap;
-
-    use crate::nem;
+    use std::num::NonZeroUsize;
 
     struct Foo {
         user: String,

@@ -49,7 +49,7 @@ impl<'a, T> NESlice<'a, T> {
     #[must_use]
     #[allow(clippy::missing_panics_doc)] // never fails
     pub const fn last(&self) -> &T {
-        &self.inner.last().unwrap()
+        self.inner.last().unwrap()
     }
 
     /// Using `try_from_slice` gives a proof that the input slice is non-empty
