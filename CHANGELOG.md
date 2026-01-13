@@ -4,7 +4,12 @@
 
 #### Added
 
-- `NESlice::last` to match `NEVec`.
+- vector: `NEVec::from_elem` exposed for times when you want `nev![foo; n]` but `n` is not `const`.
+- slice: `NESlice::last` to match `NEVec`.
+
+#### Changed
+
+- vector: The `Index` impl has been generalized to accept more slice patterns.
 
 ## 1.2.1 (2025-11-11)
 
