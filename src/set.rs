@@ -711,10 +711,8 @@ mod test {
 #[cfg(feature = "serde")]
 #[cfg(test)]
 mod serde_tests {
-    use std::collections::HashSet;
-
-    use crate::nes;
     use crate::NESet;
+    use std::collections::HashSet;
 
     #[test]
     fn json() {
