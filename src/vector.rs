@@ -395,16 +395,6 @@ impl<T> NEVec<T> {
         self.inner.get_mut(index)
     }
 
-    /// Reverses the order of elements in the slice, in place.
-    pub fn reverse(&mut self) {
-        self.inner.reverse();
-    }
-
-    /// Truncate the list to a certain size.
-    pub fn truncate(&mut self, len: NonZeroUsize) {
-        self.inner.truncate(len.get());
-    }
-
     /// Returns a regular iterator over the values in this non-empty vector.
     ///
     /// For a `NonEmptyIterator` see `Self::nonempty_iter()`.
@@ -464,6 +454,24 @@ impl<T> NEVec<T> {
         IterMut {
             inner: self.inner.iter_mut(),
         }
+    }
+
+    /// Reverses the order of elements in the slice, in place.
+    ///
+    /// ```
+    /// use nonempty_collections::nev;
+    ///
+    /// let mut n = nev![1, 2, 3];
+    /// n.reverse();
+    /// assert_eq!(nev![3,2,1], n);
+    /// ```
+    pub fn reverse(&mut self) {
+        self.inner.reverse();
+    }
+
+    /// Truncates the list to a certain size.
+    pub fn truncate(&mut self, len: NonZeroUsize) {
+        self.inner.truncate(len.get());
     }
 
     /// Creates a new non-empty vec by cloning the elements from the slice if it

@@ -1,5 +1,11 @@
 # `nonempty-collections`
 
+## Unreleased
+
+#### Added
+
+- vector: `NEVec::reverse`, mysteriously missing until this point.
+
 ## 1.3.0 (2026-01-13)
 
 #### Added
