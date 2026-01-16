@@ -395,6 +395,11 @@ impl<T> NEVec<T> {
         self.inner.get_mut(index)
     }
 
+    /// Reverses the order of elements in the slice, in place.
+    pub fn reverse(&mut self) {
+        self.inner.reverse();
+    }
+
     /// Truncate the list to a certain size.
     pub fn truncate(&mut self, len: NonZeroUsize) {
         self.inner.truncate(len.get());
