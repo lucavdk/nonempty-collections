@@ -15,18 +15,23 @@ With `NEVec`, you're freed from the boilerplate of constantly needing to
 check `is_empty()` or pattern matching before proceeding, or erroring if you
 can't. So overall, code, type signatures, and logic become cleaner.
 
-Consider that unlike `Vec`, [`NEVec::first()`] and [`NEVec::last()`] don't
+Consider that unlike `Vec`, `NEVec::first()` and `NEVec::last()` don't
 return in `Option`; they always succeed.
 
-Alongside [`NEVec`](https://docs.rs/nonempty-collections/latest/nonempty_collections/vector/struct.NEVec.html) are its cousins
-[`NESlice`](https://docs.rs/nonempty-collections/latest/nonempty_collections/slice/struct.NESlice.html), [`NEMap`](https://docs.rs/nonempty-collections/latest/nonempty_collections/map/struct.NEMap.html), and
-[`NESet`](https://docs.rs/nonempty-collections/latest/nonempty_collections/set/struct.NESet.html), which are all guaranteed to contain at least
-one item.
+Alongside `NEVec` are its cousins:
+
+- `NESlice`
+- `NESet`
+- `NEMap`
+- `NEBTreeSet`
+- `NEBTreeMap`
+
+which are all guaranteed to contain at least one item.
 
 ## Examples
 
 The simplest way to construct these non-empty collections is via their
-macros: [`nev!`], [`nes!`], and [`nem!`]:
+macros: `nev!`, `nes!`, `nem!`, `nebts!` and `nebtm!`:
 
 ```rust
 use nonempty_collections::*;
@@ -54,8 +59,8 @@ A value must be provided:
 let v = nev![]; // Doesn't compile!
 ```
 
-Like `Vec`, you can also construct a [`NEVec`](https://docs.rs/nonempty-collections/latest/nonempty_collections/vector/struct.NEVec.html) the old
-fashioned way with [`NEVec::new()`] or its constructor:
+Like `Vec`, you can also construct a `NEVec` the old
+fashioned way with `NEVec::new()` or its constructor:
 
 ```rust
 use nonempty_collections::NEVec;
@@ -84,7 +89,7 @@ assert_eq!(Some(nev![42, 36, 58, 9001]), u);
 ## Iterators
 
 This library extends the notion of non-emptiness to iterators, and provides
-the [`NonEmptyIterator`](https://docs.rs/nonempty-collections/latest/nonempty_collections/iter/trait.NonEmptyIterator.html) trait. This has some
+the `NonEmptyIterator` trait. This has some
 interesting consequences:
 
 - Functions like `map` preserve non-emptiness.
@@ -101,14 +106,14 @@ let v: NEVec<_> = nev![1, 2, 3].into_nonempty_iter().map(|n| n + 1).collect();
 assert_eq!(&2, v.first());
 ```
 
-Consider also [`IntoIteratorExt::try_into_nonempty_iter`] for converting any
-given [`Iterator`] and [`IntoIterator`] into a non-empty one, if it contains
+Consider also `IntoIteratorExt::try_into_nonempty_iter` for converting any
+given `Iterator` and `IntoIterator` into a non-empty one, if it contains
 at least one item.
 
 ## Arrays
 
 Since fixed-size arrays are by definition already not empty, they aren't
-given a special wrapper type like [`NEVec`](https://docs.rs/nonempty-collections/latest/nonempty_collections/vector/struct.NEVec.html). Instead,
+given a special wrapper type like `NEVec`. Instead,
 we enable them to be easily iterated over in a compatible way:
 
 ```rust
@@ -118,22 +123,23 @@ let a: [u32; 4] = [1, 2, 3, 4];
 let v: NEVec<_> = a.into_nonempty_iter().map(|n| n + 1).collect();
 assert_eq!(nev![2, 3, 4, 5], v);
 ```
-See [`NonEmptyArrayExt`](https://docs.rs/nonempty-collections/latest/nonempty_collections/array/trait.NonEmptyArrayExt.html) for more
+See `NonEmptyArrayExt` for more
 conversions.
 
 ## Caveats
 
-Since `NEVec`, `NEMap`, and `NESet` must have a least one element, it is not
-possible to implement the [`FromIterator`] trait for them. We can't
-know, in general, if any given standard-library [`Iterator`] actually
+Since `NEVec` and friends must have a least one element, it is not
+possible to implement the `FromIterator` trait for them. We can't
+know, in general, if any given standard-library `Iterator` actually
 contains something.
 
 ## Features
 
-* `serde`: `serde` support.
-* `indexmap`: adds [`NEIndexMap`](https://docs.rs/nonempty-collections/latest/nonempty_collections/index_map/struct.NEIndexMap.html) a non-empty [`IndexMap`](https://docs.rs/indexmap/latest/indexmap/).
-* `itertools`: adds [`NonEmptyItertools`](https://docs.rs/nonempty-collections/latest/nonempty_collections/itertools/trait.NonEmptyItertools.html) a non-empty variant of [`itertools`](https://docs.rs/itertools/latest/itertools/).
-* `either`: adds [`NEEither`](https://docs.rs/nonempty-collections/latest/nonempty_collections/either/enum.NEEither.html) a non-empty variant of `Either` from the [`either` crate](https://docs.rs/either/latest/either/).
+* `arbitrary`: adds `Arbitrary` trait impls for each collection.
+* `either`: adds `NEEither` a non-empty variant of `Either` from the [`either` crate](https://docs.rs/either/latest/either/).
+* `indexmap`: adds `NEIndexMap` a non-empty [`IndexMap`](https://docs.rs/indexmap/latest/indexmap/).
+* `itertools`: adds `NonEmptyItertools` a non-empty variant of [`itertools`](https://docs.rs/itertools/latest/itertools/).
 * `rand`: adds `NEVec` support for `SliceRandom`.
+* `serde`: `serde` support.
 
 <!-- cargo-rdme end -->

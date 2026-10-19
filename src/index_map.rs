@@ -7,9 +7,9 @@ use crate::FromNonEmptyIterator;
 use crate::IntoNonEmptyIterator;
 use crate::NonEmptyIterator;
 use crate::Singleton;
-use indexmap::indexmap;
 use indexmap::Equivalent;
 use indexmap::IndexMap;
+use indexmap::indexmap;
 use std::fmt;
 use std::fmt::Debug;
 use std::fmt::Formatter;
@@ -17,17 +17,40 @@ use std::hash::BuildHasher;
 use std::hash::Hash;
 use std::num::NonZeroUsize;
 
-/// Short-hand for constructing [`NEIndexMap`] values.
+/// Like the [`crate::nem!`] macro, but for IndexMaps.
 ///
 /// ```
-/// use nonempty_collections::ne_indexmap;
+/// use nonempty_collections::neim;
 ///
-/// let m = ne_indexmap! {"elves" => 3000, "orcs" => 10000};
+/// let m = neim! {"elves" => 3000, "orcs" => 10000};
+/// assert_eq!(2, m.len().get());
+/// ```
+#[doc(hidden)]
+#[macro_export]
+macro_rules! ne_indexmap {
+    ($hk:expr => $hv:expr, $( $xk:expr => $xv:expr,)+) => { $crate::neim!{$hk => $hv, $($xk => $xv),+} };
+    ($hk:expr => $hv:expr, $( $xk:expr => $xv:expr ),*) => {{
+        const CAP: core::num::NonZeroUsize = core::num::NonZeroUsize::MIN.saturating_add(<[()]>::len(&[$({ stringify!($xk); }),*]));
+        let mut map = $crate::index_map::NEIndexMap::with_capacity(CAP, $hk, $hv);
+        $( map.insert($xk, $xv); )*
+        map
+    }};
+    ($hk:expr => $hv:expr) => {
+        $crate::index_map::NEIndexMap::new($hk, $hv)
+    }
+}
+
+/// Like the [`crate::nem!`] macro, but for IndexMaps.
+///
+/// ```
+/// use nonempty_collections::neim;
+///
+/// let m = neim! {"elves" => 3000, "orcs" => 10000};
 /// assert_eq!(2, m.len().get());
 /// ```
 #[macro_export]
-macro_rules! ne_indexmap {
-    ($hk:expr => $hv:expr, $( $xk:expr => $xv:expr,)+) => { $crate::ne_indexmap!{$hk => $hv, $($xk => $xv),+} };
+macro_rules! neim {
+    ($hk:expr => $hv:expr, $( $xk:expr => $xv:expr,)+) => { $crate::neim!{$hk => $hv, $($xk => $xv),+} };
     ($hk:expr => $hv:expr, $( $xk:expr => $xv:expr ),*) => {{
         const CAP: core::num::NonZeroUsize = core::num::NonZeroUsize::MIN.saturating_add(<[()]>::len(&[$({ stringify!($xk); }),*]));
         let mut map = $crate::index_map::NEIndexMap::with_capacity(CAP, $hk, $hv);
@@ -47,7 +70,7 @@ macro_rules! ne_indexmap {
 /// ```
 /// use nonempty_collections::*;
 ///
-/// let m = ne_indexmap! {"Netherlands" => 18, "Canada" => 40};
+/// let m = neim! {"Netherlands" => 18, "Canada" => 40};
 /// assert_eq!(2, m.len().get());
 /// ```
 #[derive(Clone)]
@@ -103,7 +126,7 @@ impl<K, V, S> NEIndexMap<K, V, S> {
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap! {"Duke" => "Leto", "Doctor" => "Yueh", "Planetologist" => "Kynes"};
+    /// let m = neim! {"Duke" => "Leto", "Doctor" => "Yueh", "Planetologist" => "Kynes"};
     /// let v = m.keys().collect::<NEVec<_>>();
     /// assert_eq!(nev![&"Duke", &"Doctor", &"Planetologist"], v);
     /// ```
@@ -117,7 +140,7 @@ impl<K, V, S> NEIndexMap<K, V, S> {
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap! {"a" => 1, "b" => 2};
+    /// let m = neim! {"a" => 1, "b" => 2};
     /// assert_eq!(2, m.len().get());
     /// ```
     #[must_use]
@@ -137,7 +160,7 @@ impl<K, V, S> NEIndexMap<K, V, S> {
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap!["Caladan" => "Atreides", "Giedi Prime" => "Harkonnen", "Kaitain" => "Corrino"];
+    /// let m = neim!["Caladan" => "Atreides", "Giedi Prime" => "Harkonnen", "Kaitain" => "Corrino"];
     /// assert_eq!(vec![&"Atreides", &"Harkonnen", &"Corrino"], m.values().collect::<Vec<_>>());
     /// ```
     pub fn values(&self) -> Values<'_, K, V> {
@@ -151,7 +174,7 @@ impl<K, V, S> NEIndexMap<K, V, S> {
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let mut m = ne_indexmap![0 => "Fremen".to_string(), 1 => "Crysknife".to_string(), 2 => "Water of Life".to_string()];
+    /// let mut m = neim![0 => "Fremen".to_string(), 1 => "Crysknife".to_string(), 2 => "Water of Life".to_string()];
     /// m.values_mut().into_iter().for_each(|v| v.truncate(3));
     ///
     /// assert_eq!(vec![&mut "Fre".to_string(), &mut "Cry".to_string(),&mut "Wat".to_string()], m.values_mut().collect::<Vec<_>>());
@@ -218,7 +241,7 @@ where
     /// use nonempty_collections::*;
     ///
     /// assert_eq!(
-    ///     Some(ne_indexmap! {"a" => 1, "b" => 2}),
+    ///     Some(neim! {"a" => 1, "b" => 2}),
     ///     NEIndexMap::try_from_map(indexmap! {"a" => 1, "b" => 2})
     /// );
     /// let m: IndexMap<(), ()> = indexmap! {};
@@ -238,7 +261,7 @@ where
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap! {"Paul" => ()};
+    /// let m = neim! {"Paul" => ()};
     /// assert!(m.contains_key("Paul"));
     /// assert!(!m.contains_key("Atreides"));
     /// ```
@@ -256,7 +279,7 @@ where
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap! {"Arrakis" => 3};
+    /// let m = neim! {"Arrakis" => 3};
     /// assert_eq!(Some(&3), m.get("Arrakis"));
     /// assert_eq!(None, m.get("Caladan"));
     /// ```
@@ -274,7 +297,7 @@ where
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let m = ne_indexmap! {"Year" => 1963, "Pages" => 896};
+    /// let m = neim! {"Year" => 1963, "Pages" => 896};
     /// assert_eq!(Some((&"Year", &1963)), m.get_key_value(&"Year"));
     /// assert_eq!(Some((&"Pages", &896)), m.get_key_value(&"Pages"));
     /// assert_eq!(None, m.get_key_value(&"Title"));
@@ -293,7 +316,7 @@ where
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let mut m = ne_indexmap! {"Mentat" => 3, "Bene Gesserit" => 14};
+    /// let mut m = neim! {"Mentat" => 3, "Bene Gesserit" => 14};
     /// let v = m.get_mut(&"Mentat");
     /// assert_eq!(Some(&mut 3), v);
     /// *v.unwrap() += 1;
@@ -317,7 +340,7 @@ where
     ///
     /// ```
     /// use nonempty_collections::*;
-    /// let m = ne_indexmap! {"Title" => "Dune", "Author" => "Frank Herbert", "Language" => "English"};
+    /// let m = neim! {"Title" => "Dune", "Author" => "Frank Herbert", "Language" => "English"};
     ///
     /// assert_eq!(Some(0), m.get_index_of(&"Title"));
     /// assert_eq!(Some(1), m.get_index_of(&"Author"));
@@ -342,7 +365,7 @@ where
     /// ```
     /// use nonempty_collections::*;
     ///
-    /// let mut m = ne_indexmap! {"Duke" => "Leto", "Doctor" => "Yueh"};
+    /// let mut m = neim! {"Duke" => "Leto", "Doctor" => "Yueh"};
     /// assert_eq!(None, m.insert("Lady", "Jessica"));
     /// assert_eq!(
     ///     vec!["Duke", "Doctor", "Lady"],
@@ -436,7 +459,7 @@ where
     /// use indexmap::IndexMap;
     /// use nonempty_collections::*;
     ///
-    /// let m: IndexMap<&str, usize> = ne_indexmap! {"population" => 1000}.into();
+    /// let m: IndexMap<&str, usize> = neim! {"population" => 1000}.into();
     /// assert!(m.contains_key("population"));
     /// ```
     fn from(m: NEIndexMap<K, V, S>) -> Self {
@@ -497,7 +520,7 @@ impl<'a, K, V, S> IntoIterator for &'a mut NEIndexMap<K, V, S> {
 ///
 /// let v = nev![('a', 1), ('b', 2), ('c', 3), ('a', 4)];
 /// let m0 = v.into_nonempty_iter().collect::<NEIndexMap<_, _>>();
-/// let m1 = ne_indexmap! {'a' => 4, 'b' => 2, 'c' => 3};
+/// let m1 = neim! {'a' => 4, 'b' => 2, 'c' => 3};
 /// assert_eq!(m0, m1);
 /// ```
 impl<K, V, S> FromNonEmptyIterator<(K, V)> for NEIndexMap<K, V, S>
@@ -608,7 +631,7 @@ impl<K: Debug, V: Debug> Debug for IntoIter<K, V> {
 /// ```
 /// use nonempty_collections::*;
 ///
-/// let m = ne_indexmap! {"elves" => 3000, "orcs" => 10000};
+/// let m = neim! {"elves" => 3000, "orcs" => 10000};
 /// let v = m.keys().copied().collect::<NEVec<_>>();
 /// assert_eq!(nev!["elves", "orcs"], v);
 /// ```
@@ -649,7 +672,7 @@ impl<K: Debug, V: Debug> Debug for Keys<'_, K, V> {
 /// ```
 /// use nonempty_collections::*;
 ///
-/// let m = ne_indexmap! {"elves" => 3000, "orcs" => 10000};
+/// let m = neim! {"elves" => 3000, "orcs" => 10000};
 /// let mut v = m.values().copied().collect::<NEVec<_>>();
 /// v.sort();
 /// assert_eq!(nev![3000, 10000], v);
@@ -717,10 +740,10 @@ where
     type Item = (K, V);
 
     /// ```
-    /// use nonempty_collections::{NEIndexMap, Singleton, ne_indexmap};
+    /// use nonempty_collections::{NEIndexMap, Singleton, neim};
     ///
     /// let m = NEIndexMap::singleton(('a', 1));
-    /// assert_eq!(ne_indexmap!['a' => 1], m);
+    /// assert_eq!(neim!['a' => 1], m);
     /// ```
     fn singleton((k, v): Self::Item) -> Self {
         NEIndexMap::new(k, v)
@@ -736,20 +759,38 @@ where
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a, K, V> arbitrary::Arbitrary<'a> for NEIndexMap<K, V>
+where
+    K: Eq + Hash + arbitrary::Arbitrary<'a>,
+    V: arbitrary::Arbitrary<'a>,
+{
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        let key = K::arbitrary(u)?;
+        let value = V::arbitrary(u)?;
+        let tail = IndexMap::<K, V>::arbitrary(u)?;
+
+        let mut map = Self::new(key, value);
+        map.extend(tail);
+
+        Ok(map)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn test_swap_indices() {
-        let mut map = ne_indexmap! { 0 => (), 1 => () };
+        let mut map = neim! { 0 => (), 1 => () };
         assert_eq!(vec![0, 1], map.keys().copied().collect::<Vec<_>>());
         map.swap_indices(0, 1);
         assert_eq!(vec![1, 0], map.keys().copied().collect::<Vec<_>>());
         map.swap_indices(1, 0);
         assert_eq!(vec![0, 1], map.keys().copied().collect::<Vec<_>>());
 
-        let mut map = ne_indexmap! { 0 => (), 1 => (), 2 => () };
+        let mut map = neim! { 0 => (), 1 => (), 2 => () };
         assert_eq!(vec![0, 1, 2], map.keys().copied().collect::<Vec<_>>());
         map.swap_indices(0, 1);
         assert_eq!(vec![1, 0, 2], map.keys().copied().collect::<Vec<_>>());
@@ -760,7 +801,7 @@ mod test {
         map.swap_indices(1, 2);
         assert_eq!(vec![2, 0, 1], map.keys().copied().collect::<Vec<_>>());
 
-        let mut map = ne_indexmap! { 0 => (), 1 => (), 2 => (), 3 => (), 4 => (), 5 => () };
+        let mut map = neim! { 0 => (), 1 => (), 2 => (), 3 => (), 4 => (), 5 => () };
         assert_eq!(
             vec![0, 1, 2, 3, 4, 5],
             map.keys().copied().collect::<Vec<_>>()
@@ -780,22 +821,22 @@ mod test {
     #[test]
     fn debug_impl() {
         let expected = format!("{:?}", indexmap! {0 => 10, 1 => 11, 2 => 12});
-        let actual = format!("{:?}", ne_indexmap! {0 => 10, 1 => 11, 2 => 12});
+        let actual = format!("{:?}", neim! {0 => 10, 1 => 11, 2 => 12});
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn iter_mut() {
-        let mut v = ne_indexmap! {"a" => 0, "b" => 1, "c" => 2};
+        let mut v = neim! {"a" => 0, "b" => 1, "c" => 2};
 
         v.iter_mut().for_each(|(_k, v)| {
             *v += 1;
         });
-        assert_eq!(ne_indexmap! {"a" => 1, "b" => 2, "c" => 3}, v);
+        assert_eq!(neim! {"a" => 1, "b" => 2, "c" => 3}, v);
 
         for (_k, v) in &mut v {
             *v -= 1;
         }
-        assert_eq!(ne_indexmap! {"a" => 0, "b" => 1, "c" => 2}, v);
+        assert_eq!(neim! {"a" => 0, "b" => 1, "c" => 2}, v);
     }
 }

@@ -16,15 +16,20 @@
 //! Consider that unlike `Vec`, [`NEVec::first()`] and [`NEVec::last()`] don't
 //! return in `Option`; they always succeed.
 //!
-//! Alongside [`NEVec`](crate::vector::NEVec) are its cousins
-//! [`NESlice`](crate::slice::NESlice), [`NEMap`](crate::map::NEMap), and
-//! [`NESet`](crate::set::NESet), which are all guaranteed to contain at least
-//! one item.
+//! Alongside [`NEVec`](crate::vector::NEVec) are its cousins:
+//!
+//! - [`NESlice`](crate::slice::NESlice)
+//! - [`NESet`](crate::set::NESet)
+//! - [`NEMap`](crate::map::NEMap)
+//! - [`NEBTreeSet`](crate::btree_set::NEBTreeSet)
+//! - [`NEBTreeMap`](crate::btree_map::NEBTreeMap)
+//!
+//! which are all guaranteed to contain at least one item.
 //!
 //! # Examples
 //!
 //! The simplest way to construct these non-empty collections is via their
-//! macros: [`nev!`], [`nes!`], and [`nem!`]:
+//! macros: [`nev!`], [`nes!`], [`nem!`], [`nebts!`] and [`nebtm!`]:
 //!
 //! ```
 //! use nonempty_collections::*;
@@ -121,20 +126,23 @@
 //!
 //! # Caveats
 //!
-//! Since `NEVec`, `NEMap`, and `NESet` must have a least one element, it is not
+//! Since `NEVec` and friends must have a least one element, it is not
 //! possible to implement the [`FromIterator`] trait for them. We can't
 //! know, in general, if any given standard-library [`Iterator`] actually
 //! contains something.
 //!
 //! # Features
 //!
-//! * `serde`: `serde` support.
+//! * `arbitrary`: adds `Arbitrary` trait impls for each collection.
+//! * `either`: adds [`NEEither`](crate::either::NEEither) a non-empty variant of `Either` from the [`either` crate](https://docs.rs/either/latest/either/).
 //! * `indexmap`: adds [`NEIndexMap`](crate::index_map::NEIndexMap) a non-empty [`IndexMap`](https://docs.rs/indexmap/latest/indexmap/).
 //! * `itertools`: adds [`NonEmptyItertools`](crate::itertools::NonEmptyItertools) a non-empty variant of [`itertools`](https://docs.rs/itertools/latest/itertools/).
-//! * `either`: adds [`NEEither`](crate::either::NEEither) a non-empty variant of `Either` from the [`either` crate](https://docs.rs/either/latest/either/).
 //! * `rand`: adds `NEVec` support for `SliceRandom`.
+//! * `serde`: `serde` support.
 
 pub mod array;
+pub mod btree_map;
+pub mod btree_set;
 pub mod iter;
 pub mod map;
 pub mod set;
@@ -145,15 +153,21 @@ pub mod vector;
 pub mod either;
 #[cfg(feature = "indexmap")]
 pub mod index_map;
+#[cfg(feature = "indexmap")]
+pub mod index_set;
 #[cfg(feature = "itertools")]
 pub mod itertools;
 
 pub use array::ArrayNonEmptyIterator;
 pub use array::NonEmptyArrayExt;
+pub use btree_map::NEBTreeMap;
+pub use btree_set::NEBTreeSet;
 #[cfg(feature = "either")]
 pub use either::NEEither;
 #[cfg(feature = "indexmap")]
 pub use index_map::NEIndexMap;
+#[cfg(feature = "indexmap")]
+pub use index_set::NEIndexSet;
 pub use iter::FromNonEmptyIterator;
 pub use iter::IntoIteratorExt;
 pub use iter::IntoNonEmptyIterator;

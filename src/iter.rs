@@ -1,4 +1,4 @@
-//! Non-empty iterators.
+//! Non-empty [`Iterator`]s.
 
 use crate::nev;
 use crate::NEVec;

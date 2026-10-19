@@ -1,10 +1,10 @@
-//! Non-empty Vectors.
+//! Non-empty [`Vec`]s.
 
+use crate::Singleton;
 use crate::iter::FromNonEmptyIterator;
 use crate::iter::IntoNonEmptyIterator;
 use crate::iter::NonEmptyIterator;
 use crate::slice::NEChunks;
-use crate::Singleton;
 use core::fmt;
 use std::cmp::Ordering;
 use std::fmt::Debug;
@@ -17,8 +17,7 @@ use serde::Deserialize;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-/// Like the [`vec!`] macro, but enforces at least one argument. A nice
-/// short-hand for constructing [`NEVec`] values.
+/// Like the [`vec!`] macro, but enforces at least one argument.
 ///
 /// ```
 /// use nonempty_collections::nev;
@@ -1291,6 +1290,18 @@ impl<T> rand::seq::SliceRandom for NEVec<T> {
         R: rand::Rng + ?Sized,
     {
         self.inner.partial_shuffle(rng, amount)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a, T> arbitrary::Arbitrary<'a> for NEVec<T>
+where
+    T: arbitrary::Arbitrary<'a>,
+{
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        let head = T::arbitrary(u)?;
+        let tail = Vec::arbitrary(u)?;
+        Ok(Self::from((head, tail)))
     }
 }
 

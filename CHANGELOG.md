@@ -4,8 +4,22 @@
 
 #### Added
 
+- `Arbitrary` impls for the main collection types.
+
+## 1.4.0 (2026-07-28)
+
+#### Added
+
 - vector: `NEVec::reverse`, mysteriously missing until this point.
 - vector: Support for `rand::seq::SliceRandom`, exposing a `shuffle` function for `NEVec`.
+- set: `NEBTreeSet` and its macro `nebts!`.
+- map: `NEBTreeMap` and its macro `nebtm!`.
+- index: `NEIndexSet` and its macro `ne_indexset`.
+
+#### Changed
+
+- index: The `ne_indexmap` macro has a shorter alias `neim` and the original has
+  been hidden from the docs.
 
 ## 1.3.0 (2026-01-13)
 

@@ -18,8 +18,7 @@ use crate::IntoNonEmptyIterator;
 use crate::NonEmptyIterator;
 use crate::Singleton;
 
-/// Like the [`crate::nev!`] macro, but for Maps. A nice short-hand for
-/// constructing [`NEMap`] values.
+/// Like the [`crate::nev!`] macro, but for Maps.
 ///
 /// ```
 /// use nonempty_collections::nem;
@@ -691,6 +690,24 @@ where
 {
     fn extend<I: IntoIterator<Item = (K, V)>>(&mut self, iter: I) {
         self.inner.extend(iter);
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a, K, V> arbitrary::Arbitrary<'a> for NEMap<K, V>
+where
+    K: Eq + Hash + arbitrary::Arbitrary<'a>,
+    V: arbitrary::Arbitrary<'a>,
+{
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        let key = K::arbitrary(u)?;
+        let value = V::arbitrary(u)?;
+        let tail = HashMap::<K, V>::arbitrary(u)?;
+
+        let mut map = Self::new(key, value);
+        map.extend(tail);
+
+        Ok(map)
     }
 }
 
